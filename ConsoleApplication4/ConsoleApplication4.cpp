@@ -22,17 +22,14 @@ std::wstring ContentTypeForExtension(const wchar_t* pszExtension)
 
 	return s;
 }
+#include <StaticLib1/RAII/GetImageEncoders.h>
 CLSID codec_for(LPCWSTR MimeType)
 {
-	UINT  num;        // number of image encoders
-	UINT  size;       // size, in bytes, of the image encoder array
-	Gdiplus::GetImageEncodersSize(&num, &size);
-	const std::unique_ptr<Gdiplus::ImageCodecInfo> pImageCodecInfo{ reinterpret_cast<Gdiplus::ImageCodecInfo*>(new char[size]) };
-	Gdiplus::GetImageEncoders(num, size, &*pImageCodecInfo);
-	const auto end = &pImageCodecInfo.get()[num];
-	const auto found = std::find_if(&*pImageCodecInfo, end, [MimeType](const Gdiplus::ImageCodecInfo& r)->bool
+	const auto encoders = StaticLib1::RAII::GetImageEncoders();
+	const auto end = encoders->end();
+	const auto found = std::find_if(encoders->begin(), end, [MimeType](const Gdiplus::ImageCodecInfo& r)->bool
 		{
-			return lstrcmpW(r.MimeType, MimeType) == 0;
+			return lstrcmpiW(r.MimeType, MimeType) == 0;
 		});
 	if (found == end)
 		throw std::runtime_error("codec が見つかりませんでした。");
